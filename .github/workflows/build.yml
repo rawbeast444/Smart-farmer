@@ -1,3 +1,4 @@
+
 name: Build Smart Farmer APK
 
 on:
@@ -19,7 +20,10 @@ jobs:
 
       - name: Check ZIP file
         run: |
-          test -f smart_farmer_project.zip
+          test -f smart_farmer_project.zip || {
+            echo "ERROR: smart_farmer_project.zip not found"
+            exit 1
+          }
           unzip -t smart_farmer_project.zip
 
       - name: Extract Flutter project
@@ -44,7 +48,36 @@ jobs:
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-            - name: Repair Android App Gradle file
+      - name: Repair Android Gradle file
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          cat > android/build.gradle <<'EOF'
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          rootProject.buildDir = '../build'
+
+          subprojects {
+              project.buildDir = "${rootProject.buildDir}/${project.name}"
+          }
+
+          subprojects {
+              project.evaluationDependsOn(':app')
+          }
+
+          tasks.register("clean", Delete) {
+              delete rootProject.buildDir
+          }
+          EOF
+
+          echo "Checking root Gradle file:"
+          cat -n android/build.gradle
+
+      - name: Repair Android App Gradle file
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
           cat > android/app/build.gradle <<'EOF'
@@ -90,5 +123,37 @@ jobs:
           }
           EOF
 
-          echo "Checking corrected app Gradle file:"
+          echo "Checking app Gradle file:"
           cat -n android/app/build.gradle
+
+      - name: Set up Java
+        uses: actions/setup-java@v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Get dependencies
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: flutter build apk --release
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: smart-farmer-android-apk
+          path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 7
