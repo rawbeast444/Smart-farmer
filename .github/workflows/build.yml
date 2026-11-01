@@ -64,6 +64,71 @@ jobs:
           android.enableJetifier=true
           EOF
 
+      - name: Restore Android launcher icon and themes
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          mkdir -p android/app/src/main/res/values
+          mkdir -p android/app/src/main/res/drawable
+          mkdir -p android/app/src/main/res/mipmap-anydpi-v26
+
+          cat > android/app/src/main/res/values/colors.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="ic_launcher_background">#2E7D32</color>
+              <color name="launch_background_color">#FFFFFF</color>
+          </resources>
+          EOF
+
+          cat > android/app/src/main/res/values/styles.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="LaunchTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:windowBackground">@drawable/launch_background</item>
+              </style>
+
+              <style name="NormalTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:windowBackground">?android:colorBackground</item>
+              </style>
+          </resources>
+          EOF
+
+          cat > android/app/src/main/res/drawable/launch_background.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="@color/launch_background_color" />
+          </layer-list>
+          EOF
+
+          cat > android/app/src/main/res/drawable/ic_launcher_foreground.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M54,78 L54,48 C54,35 65,25 82,24 C81,41 72,52 54,54 Z" />
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M54,61 C49,45 37,38 24,40 C25,55 36,65 54,67 Z" />
+              <path
+                  android:strokeColor="#FFFFFF"
+                  android:strokeWidth="4"
+                  android:strokeLineCap="round"
+                  android:fillColor="#00000000"
+                  android:pathData="M54,78 L54,49" />
+          </vector>
+          EOF
+
+          cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background" />
+              <foreground android:drawable="@drawable/ic_launcher_foreground" />
+          </adaptive-icon>
+          EOF
+
       - name: Repair Android settings Gradle file
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
