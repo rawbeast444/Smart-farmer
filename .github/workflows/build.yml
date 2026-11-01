@@ -44,63 +44,51 @@ jobs:
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-      - name: Repair Android Gradle file
+            - name: Repair Android App Gradle file
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
-          cat > android/build.gradle <<'EOF'
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
+          cat > android/app/build.gradle <<'EOF'
+          plugins {
+              id "com.android.application"
+              id "org.jetbrains.kotlin.android"
+              id "dev.flutter.flutter-gradle-plugin"
+          }
+
+          android {
+              namespace "com.agritech.smartfarmer"
+              compileSdkVersion 34
+              ndkVersion flutter.ndkVersion
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
+              }
+
+              kotlinOptions {
+                  jvmTarget = '1.8'
+              }
+
+              defaultConfig {
+                  applicationId "com.agritech.smartfarmer"
+                  minSdkVersion 26
+                  targetSdkVersion 34
+                  versionCode flutter.versionCode
+                  versionName flutter.versionName
+              }
+
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.debug
+                      minifyEnabled false
+                      shrinkResources false
+                  }
               }
           }
 
-          rootProject.buildDir = '../build'
-
-          subprojects {
-              project.buildDir = "${rootProject.buildDir}/${project.name}"
-          }
-
-          subprojects {
-              project.evaluationDependsOn(':app')
-          }
-
-          tasks.register("clean", Delete) {
-              delete rootProject.buildDir
+          flutter {
+              source '../..'
           }
           EOF
 
-          echo "Checking corrected Gradle file:"
-          cat -n android/build.gradle
-
-      - name: Set up Java
-        uses: actions/setup-java@v6.1.0
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Show Flutter version
-        run: flutter --version
-
-      - name: Get dependencies
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: flutter pub get
-
-      - name: Build release APK
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: flutter build apk --release
-
-      - name: Upload APK
-        if: success()
-        uses: actions/upload-artifact@v7.0.2
-        with:
-          name: smart-farmer-android-apk
-          path: ${{ env.PROJECT_DIR }}/build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
-          retention-days: 7
+          echo "Checking corrected app Gradle file:"
+          cat -n android/app/build.gradle
