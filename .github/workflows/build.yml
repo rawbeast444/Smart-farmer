@@ -52,6 +52,39 @@ jobs:
         run: |
           chmod -R u+rwX "$PROJECT_DIR"
 
+      - name: Repair Android settings Gradle file
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          cat > android/settings.gradle <<'EOF'
+          pluginManagement {
+              def flutterSdkPath = {
+                  def properties = new Properties()
+                  file("local.properties").withInputStream {
+                      properties.load(it)
+                  }
+                  return properties.getProperty("flutter.sdk")
+              }()
+
+              assert flutterSdkPath != null : "Flutter SDK not found"
+
+              includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+
+          plugins {
+              id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+              id "com.android.application" version "8.11.1" apply false
+              id "org.jetbrains.kotlin.android" version "1.9.0" apply false
+          }
+
+          include ":app"
+          EOF
+
       - name: Repair Android Gradle file
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
@@ -136,8 +169,6 @@ jobs:
           zipStorePath=wrapper/dists
           distributionUrl=https\://services.gradle.org/distributions/gradle-8.14.3-all.zip
           EOF
-
-          cat android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Set up Java
         uses: actions/setup-java@v6.1.0
