@@ -48,10 +48,10 @@ jobs:
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-      - name: Fix file permissions
-        working-directory: ${{ env.PROJECT_DIR }}
+      - name: Fix project permissions
         run: |
-          chmod -R u+rwX android
+          chmod -R u+rwX "$PROJECT_DIR"
+          echo "Project permissions updated"
 
       - name: Repair Android Gradle file
         working-directory: ${{ env.PROJECT_DIR }}
