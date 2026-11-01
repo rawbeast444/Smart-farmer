@@ -52,6 +52,18 @@ jobs:
         run: |
           chmod -R u+rwX "$PROJECT_DIR"
 
+      - name: Prepare Flutter assets and AndroidX
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          mkdir -p assets/images
+          mkdir -p assets/icons
+
+          cat > android/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G -XX:ReservedCodeCacheSize=512m
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
       - name: Repair Android settings Gradle file
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
@@ -123,7 +135,7 @@ jobs:
 
           android {
               namespace "com.agritech.smartfarmer"
-              compileSdkVersion 34
+              compileSdkVersion 35
               ndkVersion flutter.ndkVersion
 
               compileOptions {
