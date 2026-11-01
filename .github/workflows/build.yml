@@ -48,6 +48,11 @@ jobs:
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
+      - name: Fix file permissions
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          chmod -R u+rwX android
+
       - name: Repair Android Gradle file
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
@@ -74,7 +79,6 @@ jobs:
           }
           EOF
 
-          echo "Checking root Gradle file:"
           cat -n android/build.gradle
 
       - name: Repair Android App Gradle file
@@ -123,7 +127,6 @@ jobs:
           }
           EOF
 
-          echo "Checking app Gradle file:"
           cat -n android/app/build.gradle
 
       - name: Set up Java
